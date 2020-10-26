@@ -262,7 +262,36 @@ def batch_dwt(batch):
         # print(coeffs.shape)
     return dwt_batch
 
-def batch_Swt(batch):
+# def batch_Swt(batch):
+#     '''
+#     Args:
+#         batch: Input batch RGB image [batch_size, img_h, img_w, 3]
+#     Returns:
+#         dwt_batch: Batch  DWT result [batch_size, img_h, img_w, 12]
+#     '''
+#     # print(len(batch.shape))
+#     assert (len(batch.shape) == 4 ),"Input batch Shape error"
+#     assert (batch.shape[3] == 3 ),"Color channel error"
+
+#     Swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 12])
+
+#     for i in range(batch.shape[0]):
+#         (LL_r, (LH_r, HL_r, HH_r)) = pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
+#         coeffs_R = np.stack([LL_r,LH_r, HL_r, HH_r], axis=-1)
+
+#         (LL_g, (LH_g, HL_g, HH_g)) = pywt.swt2(batch[i,:,:,1], 'haar', level=1)[0]
+#         coeffs_G = np.stack([LL_g,LH_g, HL_g, HH_g], axis=-1)
+
+#         (LL_b, (LH_b, HL_b, HH_b)) = pywt.swt2(batch[i,:,:,2], 'haar', level=1)[0]
+#         coeffs_B = np.stack([LL_b,LH_b, HL_b, HH_b], axis=-1)
+
+#         coeffs = np.concatenate([coeffs_R, coeffs_G, coeffs_B], axis=-1)
+
+#         Swt_batch[i,:,:,:] = coeffs
+#         # print(coeffs.shape)
+#     return Swt_batch
+
+def batch_Swt(batch, level=1):
     '''
     Args:
         batch: Input batch RGB image [batch_size, img_h, img_w, 3]
@@ -273,45 +302,87 @@ def batch_Swt(batch):
     assert (len(batch.shape) == 4 ),"Input batch Shape error"
     assert (batch.shape[3] == 3 ),"Color channel error"
 
-    Swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 12])
+    Swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 12*level])
 
     for i in range(batch.shape[0]):
-        (LL_r, (LH_r, HL_r, HH_r)) = pywt.swt2(batch[i,:,:,0], 'haar', level=1)[0]
-        coeffs_R = np.stack([LL_r,LH_r, HL_r, HH_r], axis=-1)
+        coeffs_R = pywt.swt2(batch[i,:,:,0], 'haar', level=level)
+        coeffs_G = pywt.swt2(batch[i,:,:,1], 'haar', level=level)
+        coeffs_B = pywt.swt2(batch[i,:,:,2], 'haar', level=level)
 
-        (LL_g, (LH_g, HL_g, HH_g)) = pywt.swt2(batch[i,:,:,1], 'haar', level=1)[0]
-        coeffs_G = np.stack([LL_g,LH_g, HL_g, HH_g], axis=-1)
+        for k in range(level):
+            # print((level-k)-1)
+            (LL_r, (LH_r, HL_r, HH_r)) = coeffs_R[level-k-1]
+            (LL_g, (LH_g, HL_g, HH_g)) = coeffs_G[level-k-1]
+            (LL_b, (LH_b, HL_b, HH_b)) = coeffs_B[level-k-1]
 
-        (LL_b, (LH_b, HL_b, HH_b)) = pywt.swt2(batch[i,:,:,2], 'haar', level=1)[0]
-        coeffs_B = np.stack([LL_b,LH_b, HL_b, HH_b], axis=-1)
+            coeffs_stack_R = np.stack([LL_r,LH_r, HL_r, HH_r], axis=-1)
+            coeffs_stack_G = np.stack([LL_g,LH_g, HL_g, HH_g], axis=-1)
+            coeffs_stack_B = np.stack([LL_b,LH_b, HL_b, HH_b], axis=-1)
 
-        coeffs = np.concatenate([coeffs_R, coeffs_G, coeffs_B], axis=-1)
+            # print(coeffs_stack_R.shape)
+            coeffs= np.concatenate([coeffs_stack_R, coeffs_stack_G, coeffs_stack_B], axis=-1)
 
-        Swt_batch[i,:,:,:] = coeffs
-        # print(coeffs.shape)
+            Swt_batch[i,:,:,12*k:12*(k+1)] = coeffs
+
     return Swt_batch
 
+
+# def batch_ISwt(batch):
+#     '''
+#     Args:
+#         batch: Tensor of batch [16,h,w,12]
+#     Returns:
+#         Idwt_batch: Tensor of Inverse wavelet transform [16,h*2,w*2,3]
+#     '''
+
+#     swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 3])
+
+#     for i in range(batch.shape[0]):
+#         Iswt_R = pywt.iswt2((batch[i,:,:,0],(batch[i,:,:,1],batch[i,:,:,2],batch[i,:,:,3])), wavelet='haar')
+#         Iswt_G = pywt.iswt2((batch[i,:,:,4],(batch[i,:,:,5],batch[i,:,:,6],batch[i,:,:,7])), wavelet='haar')
+#         Iswt_B = pywt.iswt2((batch[i,:,:,8],(batch[i,:,:,9],batch[i,:,:,10],batch[i,:,:,11])), wavelet='haar')
+
+#         coeffs = cv2.merge([Iswt_R, Iswt_G, Iswt_B])
+#         swt_batch[i,:,:,:] = coeffs
+#         # print(coeffs.shape)
+#     return swt_batch
 
 def batch_ISwt(batch):
     '''
     Args:
-        batch: Tensor of batch [16,h,w,12]
+        batch: Input batch RGB image [batch_size, img_h, img_w, 3]
     Returns:
-        Idwt_batch: Tensor of Inverse wavelet transform [16,h*2,w*2,3]
+        dwt_batch: Batch  DWT result [batch_size, img_h, img_w, 12]
     '''
+    # print(len(batch.shape))
+    # assert (len(batch.shape) == 4 ),"Input batch Shape error"
+    # assert (batch.shape[3] == 3 ),"Color channel error"
 
-    swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 3])
+    Swt_batch = np.zeros([batch.shape[0], batch.shape[1], batch.shape[2], 3])
+
+
 
     for i in range(batch.shape[0]):
-        Iswt_R = pywt.iswt2((batch[i,:,:,0],(batch[i,:,:,1],batch[i,:,:,2],batch[i,:,:,3])), wavelet='haar')
-        Iswt_G = pywt.iswt2((batch[i,:,:,4],(batch[i,:,:,5],batch[i,:,:,6],batch[i,:,:,7])), wavelet='haar')
-        Iswt_B = pywt.iswt2((batch[i,:,:,8],(batch[i,:,:,9],batch[i,:,:,10],batch[i,:,:,11])), wavelet='haar')
+        Iswt_level_1_R = (batch[i,:,:,0],(batch[i,:,:,1],batch[i,:,:,2],batch[i,:,:,3]))
+        Iswt_level_2_R = (batch[i,:,:,12],(batch[i,:,:,13],batch[i,:,:,14],batch[i,:,:,15]))
 
-        coeffs = cv2.merge([Iswt_R, Iswt_G, Iswt_B])
-        swt_batch[i,:,:,:] = coeffs
-        # print(coeffs.shape)
-    return swt_batch
+        Iswt_level_1_G = (batch[i,:,:,4],(batch[i,:,:,5],batch[i,:,:,6],batch[i,:,:,7]))
+        Iswt_level_2_G = (batch[i,:,:,16],(batch[i,:,:,17],batch[i,:,:,18],batch[i,:,:,19]))        
 
+        Iswt_level_1_B = (batch[i,:,:,8],(batch[i,:,:,9],batch[i,:,:,10],batch[i,:,:,11]))
+        Iswt_level_2_B = (batch[i,:,:,20],(batch[i,:,:,21],batch[i,:,:,22],batch[i,:,:,23]))
+
+        Iswt_R = pywt.iswt2([Iswt_level_2_R,Iswt_level_1_R], wavelet='haar')
+        Iswt_G = pywt.iswt2([Iswt_level_2_G,Iswt_level_1_G], wavelet='haar')
+        Iswt_B = pywt.iswt2([Iswt_level_2_B,Iswt_level_1_B], wavelet='haar')
+
+        coeffs = cv2.merge([Iswt_B, Iswt_G, Iswt_R])
+        Swt_batch[i,:,:,:] = coeffs
+
+
+    return Swt_batch
+
+    
 def tf_batch_ISwt(batch):
     return tf.numpy_function(batch_ISwt, [batch], tf.float64)
 

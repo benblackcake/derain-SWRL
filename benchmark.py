@@ -141,7 +141,7 @@ class Benchmark:
             if count >= 14:
                 break
 
-    def evaluate(self, sess, sr_out_pred, sr_BCD_pred, sr_pred, log_path=None, iteration=0):
+    def evaluate(self, sess, sr_pred_level_2, sr_pred_level_1, log_path=None, iteration=0):
         """Evaluate benchmark, returning the score and saving images."""
 
         pred = []
@@ -151,20 +151,22 @@ class Benchmark:
 
         for i, rain in enumerate(self.images_rain):
             # feed images 1 by 1 because they have different sizes
-            rain_dwt = batch_Swt(rain[np.newaxis])
+            rain_swt = batch_Swt(rain[np.newaxis], level=2)
 
-            rain_A = np.stack([rain_dwt[:,:,:,0], rain_dwt[:,:,:,4], rain_dwt[:,:,:,8]], axis=-1)
-            rain_dwt_A_BCD = np.concatenate([rain_dwt[:,:,:,1:4], rain_dwt[:,:,:,5:8], rain_dwt[:,:,:,9:12]], axis=-1)
+            # rain_A = np.stack([rain_dwt[:,:,:,0], rain_dwt[:,:,:,4], rain_dwt[:,:,:,8]], axis=-1)
+            # rain_dwt_A_BCD = np.concatenate([rain_dwt[:,:,:,1:4], rain_dwt[:,:,:,5:8], rain_dwt[:,:,:,9:12]], axis=-1)
 
-            rain_A /= 255.
-            rain_dwt_A_BCD /= 255.
+            rain_swt /= 255.
+            # rain_dwt_A_BCD /= 255.
 
-            derain_A, derain_BCD, derain = sess.run([sr_out_pred, sr_BCD_pred, sr_pred], feed_dict={'srresnet_training:0': False,\
-                                                'LR_DWT_A:0': rain_A,\
-                                                'LR_DWT_edge:0': rain_dwt_A_BCD,\
-                                                # 'LR_edge:0': lr_edge[np.newaxis]
-                                                })
+            derain_pred_level_2, derain_pred_level_1 = \
+                sess.run([sr_pred_level_2, sr_pred_level_1], \
+                feed_dict={'srresnet_training:0': False,\
+                           'LR_SWT:0': rain_swt,\
+                            })
 
+            derain_concat = np.concatenate([derain_pred_level_2, derain_pred_level_1], axis=-1)
+            print('__DEBUG__',derain_concat.shape)
             # print('__DEBUG__ Benchmark evaluate', output.shape)
             # print('___debug___')
             # print(output_A[:,:,:,0].shape)

@@ -91,110 +91,116 @@ class Srresnet:
         return tf.concat(rdb_concat, axis=3), x_LL
 
 
-    def forward(self,x_LL, x_edge):
-        with tf.variable_scope('forward_branch') as scope:
-            weights = {
-                'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-2), name='w_resnet_in'),
-                'w_resnet_1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-2), name='w_resnet_1'),
-                'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-2), name='w_resnet_out'),
-                'w_RDB_in': tf.Variable(tf.random_normal([3, 3, 9, 64], stddev=1e-2), name='w_RDB_in'),
-                'w_RDB_1': tf.Variable(tf.random_normal([3, 3, self.num_blocks*64, 64], stddev=1e-2), name='w_RDB_1'),
-                'w_RDB_out': tf.Variable(tf.random_normal([3, 3, 64, 9], stddev=1e-2), name='w_RDB_out'),
+    def sub_net(self,x_LL, x_edge):
+        weights = {
+            'w_resnet_in': tf.Variable(tf.random_normal([9, 9, 3, 64], stddev=1e-2), name='w_resnet_in'),
+            'w_resnet_1': tf.Variable(tf.random_normal([3, 3, 64, 64], stddev=1e-2), name='w_resnet_1'),
+            'w_resnet_out': tf.Variable(tf.random_normal([9, 9, 64, 3], stddev=1e-2), name='w_resnet_out'),
+            'w_RDB_in': tf.Variable(tf.random_normal([3, 3, 9, 64], stddev=1e-2), name='w_RDB_in'),
+            'w_RDB_1': tf.Variable(tf.random_normal([3, 3, self.num_blocks*64, 64], stddev=1e-2), name='w_RDB_1'),
+            'w_RDB_out': tf.Variable(tf.random_normal([3, 3, 64, 9], stddev=1e-2), name='w_RDB_out'),
 
+        }
+        biases = {
+            'b1': tf.Variable(tf.zeros([64], name='b1')),
+            'b2': tf.Variable(tf.zeros([64], name='b2')),
+            'b3': tf.Variable(tf.zeros([9], name='b3')),
             }
-            biases = {
-                'b1': tf.Variable(tf.zeros([64], name='b1')),
-                'b2': tf.Variable(tf.zeros([64], name='b2')),
-                'b3': tf.Variable(tf.zeros([9], name='b3')),
-                }
 
-            self._weightsR, self._biasesR = self.RDBParams()
+        self._weightsR, self._biasesR = self.RDBParams()
 
-            x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_in'], strides=[1,1,1,1], padding='SAME') + biases['b1']
-            x_edge_skip = x_edge
+        x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_in'], strides=[1,1,1,1], padding='SAME') + biases['b1']
+        x_edge_skip = x_edge
 
-            x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_in'], strides=[1,1,1,1], padding='SAME')
-            x_LL = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_LL)
-            x_LL_skip = x_LL
+        x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_in'], strides=[1,1,1,1], padding='SAME')
+        x_LL = tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_LL)
+        x_LL_skip = x_LL
 
-            x_edge, x_LL = self.forward_branch_bine(x_edge, x_LL)
-            print('-----------=====debug',x_edge)
+        x_edge, x_LL = self.forward_branch_bine(x_edge, x_LL)
+        print('-----------=====debug',x_edge)
 
-            x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME') + biases['b2']
-            print('-----------=====debug',x_edge)
+        x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_1'], strides=[1,1,1,1], padding='SAME') + biases['b2']
+        print('-----------=====debug',x_edge)
 
-            x_edge =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_edge)
-            x_edge = tf.add(x_edge_skip, x_edge)
+        x_edge =  tf.contrib.keras.layers.PReLU(shared_axes=[1, 2])(x_edge)
+        x_edge = tf.add(x_edge_skip, x_edge)
 
-            x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
-            # x_LL = tf.layers.batch_normalization(x_LL, training=self.training)
-            x_LL = tf.add(x_LL_skip, x_LL)
+        x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_1'], strides=[1,1,1,1], padding='SAME', name='layer_1')
+        # x_LL = tf.layers.batch_normalization(x_LL, training=self.training)
+        x_LL = tf.add(x_LL_skip, x_LL)
 
 
-            # for i in range(self.num_upsamples):
-            #     x_edge = self.Upsample2xBlock(x_edge, kernel_size=3, in_channel=64, filter_size=256)
-            #     x_LL = self.Upsample2xBlock(x_LL, kernel_size=3, in_channel=64, filter_size=256)
+        # for i in range(self.num_upsamples):
+        #     x_edge = self.Upsample2xBlock(x_edge, kernel_size=3, in_channel=64, filter_size=256)
+        #     x_LL = self.Upsample2xBlock(x_LL, kernel_size=3, in_channel=64, filter_size=256)
 
-            x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME') + biases['b3']
-            # x_edge = x_edge * 2.0
+        x_edge = tf.nn.conv2d(x_edge, weights['w_RDB_out'], strides=[1,1,1,1], padding='SAME') + biases['b3']
+        # x_edge = x_edge * 2.0
 
-            x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
+        x_LL = tf.nn.conv2d(x_LL, weights['w_resnet_out'], strides=[1,1,1,1], padding='SAME', name='y_predict')
 
-            tf_swt_debug_RA = tf.expand_dims(x_LL[:,:,:,0], axis=-1)
-            tf_swt_debug_GA = tf.expand_dims(x_LL[:,:,:,1], axis=-1)
-            tf_swt_debug_BA = tf.expand_dims(x_LL[:,:,:,2], axis=-1)
+        tf_swt_debug_RA = tf.expand_dims(x_LL[:,:,:,0], axis=-1)
+        tf_swt_debug_GA = tf.expand_dims(x_LL[:,:,:,1], axis=-1)
+        tf_swt_debug_BA = tf.expand_dims(x_LL[:,:,:,2], axis=-1)
 
-            y_RA_pred = tf.concat([tf_swt_debug_RA,x_edge[:,:,:,0:3]], axis=-1)
-            y_GA_pred = tf.concat([tf_swt_debug_GA,x_edge[:,:,:,3:6]], axis=-1)
-            y_BA_pred = tf.concat([tf_swt_debug_BA,x_edge[:,:,:,6:9]], axis=-1)
+        y_RA_pred = tf.concat([tf_swt_debug_RA,x_edge[:,:,:,0:3]], axis=-1)
+        y_GA_pred = tf.concat([tf_swt_debug_GA,x_edge[:,:,:,3:6]], axis=-1)
+        y_BA_pred = tf.concat([tf_swt_debug_BA,x_edge[:,:,:,6:9]], axis=-1)
 
-            y_pred = tf.concat([y_RA_pred, y_GA_pred, y_BA_pred], axis=-1)
+        y_pred = tf.concat([y_RA_pred, y_GA_pred, y_BA_pred], axis=-1)
 
-            y_pred = tf_batch_ISwt(y_pred)
+        # y_pred = tf_batch_ISwt(y_pred)
 
-            return x_LL, x_edge, y_pred
+        return y_pred
+
+
+    def forward(self, swt_split):
+        with tf.variable_scope('forward_branch') as scope:
+
+            # with tf.variable_scope('level_3'):  
+            #     level_3_coffes = swt_split[:,:,:,24:36]
+            #     level_3_LL = tf.stack([level_3_coffes[:,:,:,0], level_3_coffes[:,:,:,4], level_3_coffes[:,:,:,8]], axis=-1)
+            #     level_3_edge = tf.concat([level_3_coffes[:,:,:,1:4], level_3_coffes[:,:,:,5:8], level_3_coffes[:,:,:,9:12]], axis=-1)
+            #     y_pred_level_3 = self.sub_net(level_3_LL, level_3_edge)
+
+            with tf.variable_scope('level_2'):  
+                level_2_coffes = swt_split[:,:,:,12:24]
+                level_2_LL = tf.stack([level_2_coffes[:,:,:,0], level_2_coffes[:,:,:,4], level_2_coffes[:,:,:,8]], axis=-1)
+                level_2_edge = tf.concat([level_2_coffes[:,:,:,1:4], level_2_coffes[:,:,:,5:8], level_2_coffes[:,:,:,9:12]], axis=-1)
+                y_pred_level_2 = self.sub_net(level_2_LL, level_2_edge)
+
+            with tf.variable_scope('level_1'):  
+                level_1_coffes = swt_split[:,:,:,0:12]
+                level_1_LL = tf.stack([level_1_coffes[:,:,:,0], level_1_coffes[:,:,:,4], level_1_coffes[:,:,:,8]], axis=-1)
+                level_1_edge = tf.concat([level_1_coffes[:,:,:,1:4], level_1_coffes[:,:,:,5:8], level_1_coffes[:,:,:,9:12]], axis=-1)
+                y_pred_level_1 = self.sub_net(level_1_LL, level_1_edge)
+
+            
+            # tf_pred_concat = tf.concat([y_pred_level_3, y_pred_level_2, y_pred_level_1], axis=-1)
+
+            # print(tf_pred_concat)
+            return y_pred_level_2, y_pred_level_1
+            
                 
-    def _content_loss(self, y_A, y_A_pred, y_BCD, y_BCD_pred, hr, sr_pred):
+    def _content_loss(self, hr_swt, sr_pred_level_2, sr_pred_level_1):
 
 
-        """MSE, VGG22, or VGG54"""
-        if self.content_loss == 'mse':
-            return tf.reduce_mean(tf.square(hr - sr_pred))
-
-        if self.content_loss == 'L1':
-            return tf.reduce_mean(tf.abs(hr - sr_pred))
-
-        if self.content_loss == 'edge_loss_mse':
-            lamd = 0.05
-            # y_sobeled = tf.image.sobel_edges(y)
-            # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            return tf.reduce_mean(tf.square(y_A - y_A_pred))\
-             + (lamd*tf.reduce_mean(tf.square(y_BCD - y_BCD_pred)))
+        hr_level_2_coffes = hr_swt[:,:,:,12:24]
+        hr_level_1_coffes = hr_swt[:,:,:,0:12]
 
         if self.content_loss == 'edge_loss_L1':
 
-            lamd_LL = 5e-1
-            lamd_edge = 2e-1
-            alpha = 1.0
-            # y_sobeled = tf.image.sobel_edges(y)
-            # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-            l_pred = tf.cast(hr - sr_pred, tf.float32)
-            l_pred = tf.concat([l_pred, l_pred, l_pred], axis=-1)
-            print(l_pred)
-            return tf.cast(tf.reduce_mean(tf.square(hr - sr_pred)), tf.float32)\
-             + lamd_LL * (tf.reduce_mean(tf.square(y_A - y_A_pred)))\
-             + lamd_edge *tf.reduce_mean(tf.abs(alpha * y_BCD-(y_BCD_pred)))
-             # + 1.0*tf.reduce_mean(y_BCD*tf.cast((hr - sr_pred), tf.float32))
-        # if self.content_loss == 'edge_loss_L1':
-        #     lamd = 2.0
-        #     # y_sobeled = tf.image.sobel_edges(y)
-        #     # y_pred_sobeled = tf.image.sobel_edges(y_pred)
-        #     return tf.reduce_mean(tf.square(y_A - y_A_pred)) + (lamd*tf.reduce_mean(tf.abs(y_BCD - y_BCD_pred)))
+            labmda = 1
 
-    def loss_function(self, y_A, y_A_pred, y_BCD, y_BCD_pred, hr, sr_pred):
+            level_2_loss = tf.reduce_mean(tf.abs(hr_level_2_coffes - sr_pred_level_2))
+            level_1_loss = tf.reduce_mean(tf.abs(hr_level_1_coffes - sr_pred_level_1))
+
+            return level_2_loss +labmda*level_1_loss
+
+    def loss_function(self, hr_swt, sr_pred_level_2, sr_pred_level_1):
 
         # Content loss only
-        return self._content_loss(y_A, y_A_pred, y_BCD, y_BCD_pred, hr, sr_pred)
+        return self._content_loss(hr_swt, sr_pred_level_2, sr_pred_level_1)
 
     def optimize(self, loss):
         # tf.control_dependencies([discrim_train
