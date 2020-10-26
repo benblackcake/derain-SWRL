@@ -7,7 +7,7 @@ from skimage.color import rgb2ycbcr, rgb2yuv
 
 from skimage.measure import compare_psnr
 from utils import preprocess, downsample, sobel_oper, modcrop, dwt_shape, cany_oper, sobel_direct_oper,\
- batch_Idwt, batch_dwt,dwt_shape, up_sample,up_sample_batch,psnr,calculate_psnr, batch_Swt
+ batch_Idwt, batch_dwt,dwt_shape, up_sample,up_sample_batch,psnr,calculate_psnr, batch_Swt,batch_ISwt
 
 import tensorflow as tf
 import pywt
@@ -87,6 +87,8 @@ class Benchmark:
         individual_psnr = []
         individual_ssim = []
 
+        print('Length of gt: %s'%len(gt))
+        print('Length of pred: %s'%len(pred))
         for i in range(len(pred)):
             # compare to gt
             psnr = self.PSNR(self.luminance(gt[i]), self.luminance(pred[i]))
@@ -167,6 +169,8 @@ class Benchmark:
 
             derain_concat = np.concatenate([derain_pred_level_2, derain_pred_level_1], axis=-1)
             print('__DEBUG__',derain_concat.shape)
+            derain = batch_ISwt(derain_concat)
+
             # print('__DEBUG__ Benchmark evaluate', output.shape)
             # print('___debug___')
             # print(output_A[:,:,:,0].shape)

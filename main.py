@@ -67,7 +67,7 @@ def main():
     '''
     benchmarks = [
         Benchmark('./Benchmarks/Rain12/input', './Benchmarks/Rain12/label', name='Rain12'),
-        Benchmark('./Benchmarks/Rain100L/rain', './ ΩBenchmarks/Rain100L/norain', name='Rain100L'),
+        Benchmark('./Benchmarks/Rain100L/rain', './Benchmarks/Rain100L/norain', name='Rain100L'),
         
     #     #Benchmark('Benchmarks/BSD100', name='BSD100')
     ]

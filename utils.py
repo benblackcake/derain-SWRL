@@ -376,7 +376,7 @@ def batch_ISwt(batch):
         Iswt_G = pywt.iswt2([Iswt_level_2_G,Iswt_level_1_G], wavelet='haar')
         Iswt_B = pywt.iswt2([Iswt_level_2_B,Iswt_level_1_B], wavelet='haar')
 
-        coeffs = cv2.merge([Iswt_B, Iswt_G, Iswt_R])
+        coeffs = cv2.merge([Iswt_R, Iswt_G, Iswt_B])
         Swt_batch[i,:,:,:] = coeffs
 
 
