@@ -187,11 +187,11 @@ class Srresnet:
 
 
         hr_level_2_coffes = hr_swt[:,:,:,0:12]
-        hr_level_2_LL = tf.stack([hr_level_2_coffes[:,:,:,0],hr_level_2_coffes[:,:,:,4], hr_level_2_coffes[:,:,:,8]])
+        hr_level_2_LL = tf.stack([hr_level_2_coffes[:,:,:,0],hr_level_2_coffes[:,:,:,4], hr_level_2_coffes[:,:,:,8]], axis=-1)
         hr_level_2_edge = tf.concat([hr_level_2_coffes[:,:,:,1:4], hr_level_2_coffes[:,:,:,5:8], hr_level_2_coffes[:,:,:,9:12]], axis=-1)
 
         hr_level_1_coffes = hr_swt[:,:,:,12:24]
-        hr_level_1_LL = tf.stack([hr_level_1_coffes[:,:,:,0],hr_level_1_coffes[:,:,:,4], hr_level_1_coffes[:,:,:,8]])
+        hr_level_1_LL = tf.stack([hr_level_1_coffes[:,:,:,0],hr_level_1_coffes[:,:,:,4], hr_level_1_coffes[:,:,:,8]], axis=-1)
         hr_level_1_edge = tf.concat([hr_level_1_coffes[:,:,:,1:4], hr_level_1_coffes[:,:,:,5:8], hr_level_1_coffes[:,:,:,9:12]], axis=-1)
    
 
