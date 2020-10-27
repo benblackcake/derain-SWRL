@@ -143,7 +143,7 @@ class Benchmark:
             if count >= 14:
                 break
 
-    def evaluate(self, sess, sr_pred_level_2, sr_pred_level_1, log_path=None, iteration=0):
+    def evaluate(self, sess, pred_level_2_LL, pred_level_2_edge, pred_level_1_LL, pred_level_1_edge, log_path=None, iteration=0):
         """Evaluate benchmark, returning the score and saving images."""
 
         pred = []
@@ -161,13 +161,17 @@ class Benchmark:
             rain_swt /= 255.
             # rain_dwt_A_BCD /= 255.
 
-            derain_pred_level_2, derain_pred_level_1 = \
-                sess.run([sr_pred_level_2, sr_pred_level_1], \
+            derain_level_2_LL, derain_level_2_edge, derain_level_1_LL, derain_level_1_edge = \
+                sess.run([pred_level_2_LL, pred_level_2_edge, pred_level_1_LL, pred_level_1_edge], \
                 feed_dict={'srresnet_training:0': False,\
                            'LR_SWT:0': rain_swt,\
                             })
 
-            derain_concat = np.concatenate([derain_pred_level_2, derain_pred_level_1], axis=-1)
+            derain_level_2_result = np.concatenate([derain_level_2_LL, derain_level_2_edge], axis=-1)
+            derain_level_1_result = np.concatenate([derain_level_1_LL, derain_level_1_edge], axis=-1)
+
+
+            derain_concat = np.concatenate([derain_level_2_result, derain_level_1_result], axis=-1)
             print('__DEBUG__',derain_concat.shape)
             derain_concat *= 255.
             
