@@ -202,7 +202,7 @@ class Srresnet:
         # Content loss only
         return self._content_loss(hr_swt, sr_pred_level_2, sr_pred_level_1)
 
-    def optimize(self, loss):
+    def optimize(self, loss): 
         # tf.control_dependencies([discrim_train
         # update_ops needs to be here for batch normalization to work
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='forward_branch')
