@@ -151,7 +151,7 @@ class Srresnet:
 
         # y_pred = tf_batch_ISwt(y_pred)
 
-        return x_LL, x_edge
+        return y_pred
 
 
     def forward(self, swt_split):
@@ -167,14 +167,19 @@ class Srresnet:
                 level_2_coffes = swt_split[:,:,:,0:12]
                 level_2_LL = tf.stack([level_2_coffes[:,:,:,0], level_2_coffes[:,:,:,4], level_2_coffes[:,:,:,8]], axis=-1)
                 level_2_edge = tf.concat([level_2_coffes[:,:,:,1:4], level_2_coffes[:,:,:,5:8], level_2_coffes[:,:,:,9:12]], axis=-1)
-                y_pred_level_2_LL, y_pred_level_2_edge = self.sub_net(level_2_LL, level_2_edge)
+                y_pred_level_2 = self.sub_net(level_2_LL, level_2_edge)
+
+                y_pred_level_2_LL = tf.stack([y_pred_level_2[:,:,:,0], y_pred_level_2[:,:,:,4], y_pred_level_2[:,:,:,8]], axis=-1)
+                y_pred_level_2_edge = tf.concat([y_pred_level_2[:,:,:,1:4], y_pred_level_2[:,:,:,5:8], y_pred_level_2[:,:,:,9:12]], axis=-1)
 
             with tf.variable_scope('level_1'):  
                 level_1_coffes = swt_split[:,:,:,12:24]
                 level_1_LL = tf.stack([level_1_coffes[:,:,:,0], level_1_coffes[:,:,:,4], level_1_coffes[:,:,:,8]], axis=-1)
                 level_1_edge = tf.concat([level_1_coffes[:,:,:,1:4], level_1_coffes[:,:,:,5:8], level_1_coffes[:,:,:,9:12]], axis=-1)
-                y_pred_level_1_LL, y_pred_level_1_edge = self.sub_net(level_1_LL, level_1_edge)
+                y_pred_level_1 = self.sub_net(level_1_LL, level_1_edge)
 
+                y_pred_level_1_LL = tf.stack([y_pred_level_1[:,:,:,0], y_pred_level_1[:,:,:,4], y_pred_level_1[:,:,:,8]], axis=-1)
+                y_pred_level_1_edge = tf.concat([y_pred_level_1[:,:,:,1:4], y_pred_level_1[:,:,:,5:8], y_pred_level_1[:,:,:,9:12]], axis=-1)
 
             
             # tf_pred_concat = tf.concat([y_pred_level_3, y_pred_level_2, y_pred_level_1], axis=-1)
