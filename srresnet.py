@@ -164,13 +164,13 @@ class Srresnet:
             #     y_pred_level_3 = self.sub_net(level_3_LL, level_3_edge)
 
             with tf.variable_scope('level_2'):  
-                level_2_coffes = swt_split[:,:,:,12:24]
+                level_2_coffes = swt_split[:,:,:,0:12]
                 level_2_LL = tf.stack([level_2_coffes[:,:,:,0], level_2_coffes[:,:,:,4], level_2_coffes[:,:,:,8]], axis=-1)
                 level_2_edge = tf.concat([level_2_coffes[:,:,:,1:4], level_2_coffes[:,:,:,5:8], level_2_coffes[:,:,:,9:12]], axis=-1)
                 y_pred_level_2 = self.sub_net(level_2_LL, level_2_edge)
 
             with tf.variable_scope('level_1'):  
-                level_1_coffes = swt_split[:,:,:,0:12]
+                level_1_coffes = swt_split[:,:,:,12:24]
                 level_1_LL = tf.stack([level_1_coffes[:,:,:,0], level_1_coffes[:,:,:,4], level_1_coffes[:,:,:,8]], axis=-1)
                 level_1_edge = tf.concat([level_1_coffes[:,:,:,1:4], level_1_coffes[:,:,:,5:8], level_1_coffes[:,:,:,9:12]], axis=-1)
                 y_pred_level_1 = self.sub_net(level_1_LL, level_1_edge)
@@ -185,8 +185,8 @@ class Srresnet:
     def _content_loss(self, hr_swt, sr_pred_level_2, sr_pred_level_1):
 
 
-        hr_level_2_coffes = hr_swt[:,:,:,12:24]
-        hr_level_1_coffes = hr_swt[:,:,:,0:12]
+        hr_level_2_coffes = hr_swt[:,:,:,0:12]
+        hr_level_1_coffes = hr_swt[:,:,:,12:24]
 
         if self.content_loss == 'edge_loss_L1':
 
