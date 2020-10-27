@@ -171,7 +171,7 @@ class Benchmark:
             derain_level_1_result = np.concatenate([derain_level_1_LL, derain_level_1_edge], axis=-1)
 
 
-            derain_concat = np.concatenate([derain_level_2_result, derain_level_1_result], axis=-1)
+            derain_concat = np.concatenate([derain_level_1_result, derain_level_2_result], axis=-1)
             print('__DEBUG__',derain_concat.shape)
             derain_concat *= 255.
             
