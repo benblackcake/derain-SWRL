@@ -55,11 +55,11 @@ def main():
     hr_swt = tf.placeholder(tf.float32, [None, None, None, 24], name='HR_SWT')
 
 
-    pred_level_2_LL, pred_level_2_edge, pred_level_1_LL, pred_level_1_edge = srresnet_model.forward(lr_swt)
+    y_pred_level_2, y_pred_level_1 = srresnet_model.forward(lr_swt)
     # sr_out_pred = srresnet_model.forward_LL_branch(lr_A)
     # sr_BCD_pred = srresnet_model.forward_edge_branch(lr_dwt_edge)
 
-    sr_loss = srresnet_model.loss_function(hr_swt, pred_level_2_LL, pred_level_2_edge, pred_level_1_LL, pred_level_1_edge)
+    sr_loss = srresnet_model.loss_function(hr_swt, y_pred_level_2, y_pred_level_1)
     sr_opt = srresnet_model.optimize(sr_loss)
     
     '''
@@ -167,7 +167,7 @@ def main():
         #                  # Evaluate benchmarks
         #                 log_line = ''
                         for benchmark in benchmarks:
-                            psnr, ssim, _, _ = benchmark.evaluate(sess, pred_level_2_LL, pred_level_2_edge, pred_level_1_LL, pred_level_1_edge , log_path, iteration)
+                            psnr, ssim, _, _ = benchmark.evaluate(sess, y_pred_level_2, y_pred_level_1, log_path, iteration)
                             
         #                     print(' [%s] PSNR: %.2f, SSIM: %.4f' % (benchmark.name, psnr, ssim), end='')
         #                     log_line += ',%.7f, %.7f' % (psnr, ssim)

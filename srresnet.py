@@ -169,26 +169,20 @@ class Srresnet:
                 level_2_edge = tf.concat([level_2_coffes[:,:,:,1:4], level_2_coffes[:,:,:,5:8], level_2_coffes[:,:,:,9:12]], axis=-1)
                 y_pred_level_2 = self.sub_net(level_2_LL, level_2_edge)
 
-                y_pred_level_2_LL = tf.stack([y_pred_level_2[:,:,:,0], y_pred_level_2[:,:,:,4], y_pred_level_2[:,:,:,8]], axis=-1)
-                y_pred_level_2_edge = tf.concat([y_pred_level_2[:,:,:,1:4], y_pred_level_2[:,:,:,5:8], y_pred_level_2[:,:,:,9:12]], axis=-1)
-
             with tf.variable_scope('level_1'):  
                 level_1_coffes = swt_split[:,:,:,12:24]
                 level_1_LL = tf.stack([level_1_coffes[:,:,:,0], level_1_coffes[:,:,:,4], level_1_coffes[:,:,:,8]], axis=-1)
                 level_1_edge = tf.concat([level_1_coffes[:,:,:,1:4], level_1_coffes[:,:,:,5:8], level_1_coffes[:,:,:,9:12]], axis=-1)
                 y_pred_level_1 = self.sub_net(level_1_LL, level_1_edge)
 
-                y_pred_level_1_LL = tf.stack([y_pred_level_1[:,:,:,0], y_pred_level_1[:,:,:,4], y_pred_level_1[:,:,:,8]], axis=-1)
-                y_pred_level_1_edge = tf.concat([y_pred_level_1[:,:,:,1:4], y_pred_level_1[:,:,:,5:8], y_pred_level_1[:,:,:,9:12]], axis=-1)
-
             
             # tf_pred_concat = tf.concat([y_pred_level_3, y_pred_level_2, y_pred_level_1], axis=-1)
 
             # print(tf_pred_concat)
-            return y_pred_level_2_LL, y_pred_level_2_edge, y_pred_level_1_LL, y_pred_level_1_edge
+            return y_pred_level_2, y_pred_level_1
             
                 
-    def _content_loss(self, hr_swt, pred_level_2_LL, pred_level_2_edge, pred_level_1_LL, pred_level_1_edge):
+    def _content_loss(self, hr_swt, sr_pred_level_2, sr_pred_level_1):
 
 
         hr_level_2_coffes = hr_swt[:,:,:,0:12]
@@ -199,6 +193,11 @@ class Srresnet:
         hr_level_1_LL = tf.stack([hr_level_1_coffes[:,:,:,0],hr_level_1_coffes[:,:,:,4], hr_level_1_coffes[:,:,:,8]], axis=-1)
         hr_level_1_edge = tf.concat([hr_level_1_coffes[:,:,:,1:4], hr_level_1_coffes[:,:,:,5:8], hr_level_1_coffes[:,:,:,9:12]], axis=-1)
    
+        pred_level_2_LL = tf.stack([sr_pred_level_2[:,:,:,0],sr_pred_level_2[:,:,:,4],sr_pred_level_2[:,:,:,8]], axis=-1)
+        pred_level_2_edge = tf.concat([sr_pred_level_2[:,:,:,1:4], sr_pred_level_2[:,:,:,5:8], sr_pred_level_2[:,:,:,9:12]], axis=-1)
+
+        pred_level_1_LL = tf.stack([sr_pred_level_1[:,:,:,0],sr_pred_level_1[:,:,:,4],sr_pred_level_1[:,:,:,8]], axis=-1)    
+        pred_level_1_edge = tf.concat([sr_pred_level_2[:,:,:,1:4], sr_pred_level_2[:,:,:,5:8], sr_pred_level_1[:,:,:,9:12]], axis=-1)
 
         if self.content_loss == 'edge_loss_L1':
 
@@ -213,10 +212,10 @@ class Srresnet:
 
             return level_2_loss +labmda*level_1_loss
 
-    def loss_function(self, hr_swt, pred_level_2_LL, pred_level_2_edge, pred_level_1_LL, pred_level_1_edge):
+    def loss_function(self, hr_swt, y_pred_level_2, y_pred_level_1):
 
         # Content loss only
-        return self._content_loss(hr_swt, pred_level_2_LL, pred_level_2_edge, pred_level_1_LL, pred_level_1_edge)
+        return self._content_loss(hr_swt, y_pred_level_2, y_pred_level_1)
 
     def optimize(self, loss): 
         # tf.control_dependencies([discrim_train
