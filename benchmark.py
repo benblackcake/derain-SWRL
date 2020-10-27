@@ -169,6 +169,8 @@ class Benchmark:
 
             derain_concat = np.concatenate([derain_pred_level_2, derain_pred_level_1], axis=-1)
             print('__DEBUG__',derain_concat.shape)
+            derain_concat *= 255.
+            
             derain = batch_ISwt(derain_concat)
 
             # print('__DEBUG__ Benchmark evaluate', output.shape)
@@ -194,7 +196,6 @@ class Benchmark:
             '''__DEBUG__'''
             derain = np.squeeze(derain, axis=0)
             # sr /= np.abs(sr).max()
-            derain *= 255.
             # cv2.imshow('__DEBUG__', sr.astype('uint8'))
             # cv2.waitKey(0)
             ''''''
