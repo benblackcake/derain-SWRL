@@ -166,7 +166,7 @@ class Benchmark:
                 feed_dict={'srresnet_training:0': False,\
                            'LR_SWT:0': rain_swt,\
                             })
-            derain_concat = np.concatenate([derain_pred_level_2, derain_pred_level_1], axis=-1)
+            derain_concat = np.concatenate([derain_level_2, derain_level_1], axis=-1)
             # derain_level_2_result = np.concatenate([derain_level_2_LL, derain_level_2_edge], axis=-1)
             # derain_level_1_result = np.concatenate([derain_level_1_LL, derain_level_1_edge], axis=-1)
 
