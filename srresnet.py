@@ -197,7 +197,7 @@ class Srresnet:
         pred_level_2_edge = tf.concat([sr_pred_level_2[:,:,:,1:4], sr_pred_level_2[:,:,:,5:8], sr_pred_level_2[:,:,:,9:12]], axis=-1)
 
         pred_level_1_LL = tf.stack([sr_pred_level_1[:,:,:,0],sr_pred_level_1[:,:,:,4],sr_pred_level_1[:,:,:,8]], axis=-1)    
-        pred_level_1_edge = tf.concat([sr_pred_level_2[:,:,:,1:4], sr_pred_level_2[:,:,:,5:8], sr_pred_level_1[:,:,:,9:12]], axis=-1)
+        pred_level_1_edge = tf.concat([sr_pred_level_1[:,:,:,1:4], sr_pred_level_1[:,:,:,5:8], sr_pred_level_1[:,:,:,9:12]], axis=-1)
 
         if self.content_loss == 'edge_loss_L1':
 
