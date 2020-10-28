@@ -201,7 +201,7 @@ class Srresnet:
 
         if self.content_loss == 'edge_loss_L1':
 
-            labmda = 3
+            labmda = 1
 
             level_2_loss = tf.reduce_mean(tf.square(hr_level_2_LL - pred_level_2_LL))\
                          + tf.reduce_mean(tf.abs(hr_level_2_edge - pred_level_2_edge))
